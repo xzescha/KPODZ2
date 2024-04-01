@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Пользователи
+  version: 0.0.1
+servers:
+  - url: http://localhost:8090/api/v1
+tags:
+  - name: menu
+    description: 'Всё, что можно сделать с пользователем'
+paths:
+  /menu:
+    post:
+      tags:
+        - menu
+      summary: 'Создать новое блюдо в меню'
+      description: |
+        Регистрирует в системе новое блюдо
+      operationId: createMenu
+      requestBody:
+        description: 'Объект для создания блюда в меню'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/menu'
+      responses:
+        '201':
+          description: 'Создано.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/menuIdInfo'
+        default:
+          description: 'Что-то пошло не так'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /menu/{id}:
+    get:
+      tags:
+        - menu
+      summary: 'Инфо о блюде по его id'
+      description: 'Это может сделать только авторизованный пользователь'
+      operationId: getMenuByID
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: 'Успешный ответ'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/menu'
+        '404':
+          description: 'Блюдо не найдено'
+        default:
+          description: 'Что-то пошло не так'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - menu
+      summary: 'Обновить информацию о блюде'
+      description: 'Это может сделать только авторизованный администратор'
+      operationId: updateMenuByID
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        description: 'Обновить существующего пользователя'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/menu'
+      responses:
+        '204':
+          description: 'Успешная операция'
+        '304':
+          description: 'Изменения не требуются'
+        '404':
+          description: 'Блюдо не найдено'
+        default:
+          description: 'Что-то пошло не так'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - menu
+      summary: 'Удаление блюда'
+      description: 'Блюдо остается доступным, но его количество обнуляется'
+      operationId: deleteMenuByID
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: 'Успешная операция'
+        '304':
+          description: 'Изменения не требуются'
+        '404':
+          description: 'Блюдо не найдено'
+        default:
+          description: 'Что-то пошло не так'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /menu/findByName:
+    get:
+      tags:
+        - menu
+      summary: 'Поиск блюда по наименованию'
+      description: 'Поиск блюда идет по точному совпадению с учетом регистра'
+      operationId: findMenuByName
+      parameters:
+        - $ref: '#/components/parameters/name'
+      responses:
+        '200':
+          description: 'Успешный ответ'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/menuFullInfo'
+        '404':
+          description: 'Блюдо не найдено'
+        default:
+          description: 'Что-то пошло не так'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /menu/findAll:
+    get:
+      tags:
+        - menu
+      summary: 'Поиск списка доступных к заказу блюд'
+      operationId: findMenuAll
+      responses:
+        '200':
+          description: 'Успешный ответ'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/menuFullInfo'
+        '404':
+          description: 'Блюдо не найдено'
+        default:
+          description: 'Что-то пошло не так'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    name:
+      name: name
+      in: query
+      description: 'Наименование блюда'
+      required: true
+      schema:
+        type: string
+        minLength: 4
+        maxLength: 50
+        pattern: '([a-zA-Z0-9_@.-])'
+      example: 'Fettucini'
+    id:
+      name: id
+      in: path
+      description: 'ID блюда, по которому необходимо вернуть информацию'
+      required: true
+      schema:
+        type: string
+        format: uuidv7
+      example: '018c21f9-2033-79cf-97bc-7d7ae6e8a8d7'
+
+  schemas:
+    menu:
+      description: 'Все что есть о блюде'
+      type: object
+      required:
+        - name
+        - quantity
+        - price
+        - min2cook
+      properties:
+        name:
+          description: 'Наименование блюда'
+          type: string
+          minLength: 4
+          maxLength: 50
+          pattern: '([a-zA-Z0-9_@.-])'
+          example: 'Fettucini'
+        quantity:
+          description: 'Кол-во блюд которые можем приготовить'
+          type: integer
+          example: 10
+        price:
+          description: 'Стоимость блюда в рублях'
+          type: number
+          example: 150.04
+        min2cook:
+          description: 'Время на приготовление блюда в минутах'
+          type: integer
+          example: 30
+    menuIdInfo:
+      type: object
+      description: 'Информация об идентификаторе блюда'
+      required:
+        - id
+      properties:
+        id:
+          description: 'Id блюда'
+          type: string
+          format: uuidv7
+          example: '018c21f9-2033-79cf-97bc-7d7ae6e8a8d7'
+    menuFullInfo:
+      type: object
+      description: 'Полная информация о блюде'
+      allOf:
+        - $ref: "#/components/schemas/menuIdInfo"
+        - $ref: '#/components/schemas/menu'
+    ErrorResponse:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+      properties:
+        timestamp:
+          type: string
+          description: 'Время ошибки'
+          example: '2023-12-05T10:26:49.779+00:00'
+        status:
+          type: integer
+          description: 'Числовой код ошибочного ответа'
+          format: int32
+          example: 403
+        error:
+          type: string
+          maxLength: 200
+          description: 'Краткое, понятное человеку, описание проблемы'
+          example: 'Forbidden'
+        details:
+          type: string
+          maxLength: 2000
+          description: 'Подробное, понятное человеку, описание проблемы'
+          example: 'Доступ к запрошенному ресурсу запрещен'
+        causes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorCause'
+    ErrorCause:
+      type: object
+      description: 'Описание причины ошибки'
+      properties:
+        error:
+          type: string
+          maxLength: 200
+          description: 'Краткое, понятное человеку, описание'
+          example: 'Неверный формат'
+        field:
+          type: string
+          maxLength: 200
+          description: 'Ошибочное поле'
+          example: 'Authorization'
